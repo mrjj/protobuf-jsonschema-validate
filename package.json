@@ -20,10 +20,14 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "ajv": "6.6.1",
+    "ajv": "6.6.2",
     "google-proto-files": "0.18.0",
     "protobufjs": "6.8.8",
-    "lodash.omit": "4.5.0"
+    "lodash.omit": "4.5.0",
+    "lodash.pick": "4.4.0",
+    "lodash.set": "4.3.2",
+    "lodash.clonedeep": "4.5.0",
+    "lodash.get": "4.4.2"
   },
   "jest": {
     "transform": {}

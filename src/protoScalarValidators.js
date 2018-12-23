@@ -5,63 +5,81 @@
  */
 const MAX_SAFE_INTEGER = Math.pow(2, 53) - 1;
 const MIN_SAFE_INTEGER = -MAX_SAFE_INTEGER;
+const MAX_INTEGER32 = 0x7fffffff;
+const MIN_INTEGER32 = -0x80000000;
 
+const isUndefined = (x) => typeof x === 'undefined';
 module.exports = {
-  bytes: {
-    type: 'string'
-  },
-  string: {
-    type: 'string'
-  },
-  bool: {
-    type: 'boolean'
-  },
-  int32: {
+  bytes: (obj) => ({
+    type: 'array',     // type: 'string'
+    ...obj,
+  }),
+  string: (obj) => ({
+    type: 'string',
+    ...obj,
+  }),
+  bool: (obj) => ({
+    type: 'boolean',
+    ...obj,
+  }),
+  int32: obj => isUndefined(obj.oneOf) ? {
     type: 'integer',
-    minimum: -0x80000000,
-    maximum: 0x7fffffff
-  },
-  sint32: {
+    ...(isUndefined(obj.minimum) && isUndefined(obj.exclusiveMinimum) ? { minimum: MIN_INTEGER32 } : {}),
+    ...(isUndefined(obj.maximum) && isUndefined(obj.exclusiveMaximum) ? { maximum: MAX_INTEGER32 } : {}),
+    ...obj
+  } : { ...obj },
+  sint32: obj => isUndefined(obj.oneOf) ? {
     type: 'integer',
-    minimum: -0x80000000,
-    maximum: 0x7fffffff
-  },
-  uint32: {
+    ...(isUndefined(obj.minimum) && isUndefined(obj.exclusiveMinimum) ? { minimum: MIN_INTEGER32 } : {}),
+    ...(isUndefined(obj.maximum) && isUndefined(obj.exclusiveMaximum) ? { maximum: MAX_INTEGER32 } : {}),
+    ...obj
+  } : { ...obj },
+  uint32: obj => isUndefined(obj.oneOf) ? {
     type: 'integer',
-    minimum: 0,
-    maximum: 0xffffffff
-  },
-  int64: {
+    ...(isUndefined(obj.minimum) && isUndefined(obj.exclusiveMinimum) ? { minimum: 0 } : {}),
+    ...(isUndefined(obj.maximum) && isUndefined(obj.exclusiveMaximum) ? { maximum: MAX_INTEGER32 } : {}),
+    ...obj
+  } : { ...obj },
+  int64: obj => isUndefined(obj.oneOf) ? {
     type: 'integer',
-    minimum: MIN_SAFE_INTEGER,
-    maximum: MAX_SAFE_INTEGER
-  },
-  sint64: {
+    ...(isUndefined(obj.minimum) && isUndefined(obj.exclusiveMinimum) ? { minimum: MIN_SAFE_INTEGER } : {}),
+    ...(isUndefined(obj.maximum) && isUndefined(obj.exclusiveMaximum) ? { maximum: MAX_SAFE_INTEGER } : {}),
+    ...obj
+  } : { ...obj },
+  sint64: obj => isUndefined(obj.oneOf) ? {
     type: 'integer',
-    minimum: MIN_SAFE_INTEGER,
-    maximum: MAX_SAFE_INTEGER
-  },
-  uint64: {
+    ...(isUndefined(obj.minimum) && isUndefined(obj.exclusiveMinimum) ? { minimum: MIN_SAFE_INTEGER } : {}),
+    ...(isUndefined(obj.maximum) && isUndefined(obj.exclusiveMaximum) ? { maximum: MAX_SAFE_INTEGER } : {}),
+    ...obj
+  } : { ...obj },
+  uint64: obj => isUndefined(obj.oneOf) ? {
     type: 'integer',
-    minimum: 0,
-    maximum: MAX_SAFE_INTEGER
-  },
-  fixed32: {
+    ...(isUndefined(obj.minimum) && isUndefined(obj.exclusiveMinimum) ? { minimum: 0 } : {}),
+    ...(isUndefined(obj.maximum) && isUndefined(obj.exclusiveMaximum) ? { maximum: MAX_SAFE_INTEGER } : {}),
+    ...obj
+  } : { ...obj },
+  fixed32: obj => isUndefined(obj.oneOf) ? {
     type: 'number',
-  },
-  fixed64: {
+    ...obj
+  } : { ...obj },
+  fixed64: obj => isUndefined(obj.oneOf) ? {
     type: 'number',
-  },
-  sfixed32: {
+    ...obj
+  } : { ...obj },
+  sfixed32: obj => isUndefined(obj.oneOf) ? {
     type: 'number',
-  },
-  sfixed64: {
+    ...obj
+  } : { ...obj },
+  sfixed64: obj => isUndefined(obj.oneOf) ? {
     type: 'number',
-  },
-  float: {
+    ...obj
+  } : { ...obj },
+  float: obj => isUndefined(obj.oneOf) ? {
     type: 'number',
-  },
-  double: {
+    ...obj
+  } : { ...obj },
+  double: obj => isUndefined(obj.oneOf) ? {
     type: 'number',
-  }
+    ...obj
+  } : { ...obj },
 };

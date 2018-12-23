@@ -1,0 +1,283 @@
+syntax = "proto3";
+package json_schema_7;
+
+//option go_package = "github.com/lyft/protoc-gen-validate/validate";
+
+//import "google/protobuf/descriptor.proto";
+//import "google/protobuf/duration.proto";
+//import "google/protobuf/timestamp.proto";
+
+package json_schema.v7;
+
+
+option csharp_namespace = "JsonSchema.V7";
+option go_package = "json-schema/v1;admin";
+option java_multiple_files = true;
+option java_outer_classname = "JsonSchemaV1";
+option java_package = "json_schema.v1";
+
+enum simpleTypes {
+  array = 0;
+  boolean = 10;
+  integer = 20;
+  null = 30;
+  number = 40;
+  object = 50;
+  string = 60;
+}
+message ref {
+  string ref = 16;
+}
+
+message simpleTypes {
+
+}
+
+message definitions {
+  repeated ref schemaArray = 16;
+  uint32 nonNegativeInteger = 32;
+  uint32 nonNegativeIntegerDefault0 = 33;
+  simpleTypes simpleTypes = 34;
+  repeated string stringArray = 35;
+
+}
+
+/**
+
+{
+    message definitions {}": {
+        "schemaArray": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#" }
+        },
+        "nonNegativeInteger": {
+            "type": "integer",
+            "minimum": 0
+        },
+        "nonNegativeIntegerDefault0": {
+            "allOf": [
+                { "$ref": "#/definitions/nonNegativeInteger" },
+                { "default": 0 }
+            ]
+        },
+        "simpleTypes": {
+            "enum": [
+                "array",
+                "boolean",
+                "integer",
+                "null",
+                "number",
+                "object",
+                "string"
+            ]
+        },
+        "stringArray": {
+            "type": "array",
+            "items": { "type": "string" },
+            "uniqueItems": true,
+            "default": []
+        }
+    },
+    "type": ["object", "boolean"],
+    "properties": {
+        "$id": {
+            "type": "string",
+            "format": "uri-reference"
+        },
+        "$schema": {
+            "type": "string",
+            "format": "uri"
+        },
+        "$ref": {
+            "type": "string",
+            "format": "uri-reference"
+        },
+        "$comment": {
+            "type": "string"
+        },
+        "title": {
+            "type": "string"
+        },
+        "description": {
+            "type": "string"
+        },
+        "default": true,
+        "readOnly": {
+            "type": "boolean",
+            "default": false
+        },
+        "examples": {
+            "type": "array",
+            "items": true
+        },
+        "multipleOf": {
+            "type": "number",
+            "exclusiveMinimum": 0
+        },
+        "maximum": {
+            "type": "number"
+        },
+        "exclusiveMaximum": {
+            "type": "number"
+        },
+        "minimum": {
+            "type": "number"
+        },
+        "exclusiveMinimum": {
+            "type": "number"
+        },
+        "maxLength": { "$ref": "#/definitions/nonNegativeInteger" },
+        "minLength": { "$ref": "#/definitions/nonNegativeIntegerDefault0" },
+        "pattern": {
+            "type": "string",
+            "format": "regex"
+        },
+        "additionalItems": { "$ref": "#" },
+        "items": {
+            "anyOf": [
+                { "$ref": "#" },
+                { "$ref": "#/definitions/schemaArray" }
+            ],
+            "default": true
+        },
+        "maxItems": { "$ref": "#/definitions/nonNegativeInteger" },
+        "minItems": { "$ref": "#/definitions/nonNegativeIntegerDefault0" },
+        "uniqueItems": {
+            "type": "boolean",
+            "default": false
+        },
+        "contains": { "$ref": "#" },
+        "maxProperties": { "$ref": "#/definitions/nonNegativeInteger" },
+        "minProperties": { "$ref": "#/definitions/nonNegativeIntegerDefault0" },
+        "required": { "$ref": "#/definitions/stringArray" },
+        "additionalProperties": { "$ref": "#" },
+        "definitions": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#" },
+            "default": {}
+        },
+        "properties": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#" },
+            "default": {}
+        },
+        "patternProperties": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#" },
+            "propertyNames": { "format": "regex" },
+            "default": {}
+        },
+        "dependencies": {
+            "type": "object",
+            "additionalProperties": {
+                "anyOf": [
+                    { "$ref": "#" },
+                    { "$ref": "#/definitions/stringArray" }
+                ]
+            }
+        },
+        "propertyNames": { "$ref": "#" },
+        "const": true,
+        "enum": {
+            "type": "array",
+            "items": true,
+            "minItems": 1,
+            "uniqueItems": true
+        },
+        "type": {
+            "anyOf": [
+                { "$ref": "#/definitions/simpleTypes" },
+                {
+                    "type": "array",
+                    "items": { "$ref": "#/definitions/simpleTypes" },
+                    "minItems": 1,
+                    "uniqueItems": true
+                }
+            ]
+        },
+        "format": { "type": "string" },
+        "contentMediaType": { "type": "string" },
+        "contentEncoding": { "type": "string" },
+        "if": { "$ref": "#" },
+        "then": { "$ref": "#" },
+        "else": { "$ref": "#" },
+        "allOf": { "$ref": "#/definitions/schemaArray" },
+        "anyOf": { "$ref": "#/definitions/schemaArray" },
+        "oneOf": { "$ref": "#/definitions/schemaArray" },
+        "not": { "$ref": "#" }
+    },
+    "default": true
+}
+
+**/
+
+message JSONSchema {
+  // field 1 is reserved for '$id', omitted from OpenAPI v2.
+  reserved 1;
+  // field 2 is reserved for '$schema', omitted from OpenAPI v2.
+  reserved 2;
+  // field 3 is reserved for '$ref', although it is unclear how it would be used.
+  reserved 3;
+  // field 4 is reserved for '$comment', omitted from OpenAPI v2.
+  reserved 4;
+  string title = 5;
+  string description = 6;
+  string default = 7;
+  // field 8 is reserved for 'readOnly', which has an OpenAPI v2-specific meaning and is defined there.
+  reserved 8;
+  // field 9 is reserved for 'examples', which is omitted from OpenAPI v2 in favor of 'example' field.
+  reserved 9;
+  double multiple_of = 10;
+  double maximum = 11;
+  bool exclusive_maximum = 12;
+  double minimum = 13;
+  bool exclusive_minimum = 14;
+  uint64 max_length = 15;
+  uint64 min_length = 16;
+  string pattern = 17;
+  // field 18 is reserved for 'additionalItems', omitted from OpenAPI v2.
+  reserved 18;
+  // field 19 is reserved for 'items', but in OpenAPI-specific way. TODO(ivucica): add 'items'?
+  reserved 19;
+  uint64 max_items = 20;
+  uint64 min_items = 21;
+  bool unique_items = 22;
+  // field 23 is reserved for 'contains', omitted from OpenAPI v2.
+  reserved 23;
+  uint64 max_properties = 24;
+  uint64 min_properties = 25;
+  repeated string required = 26;
+  // field 27 is reserved for 'additionalProperties', but in OpenAPI-specific way. TODO(ivucica): add 'additionalProperties'?
+  reserved 27;
+  // field 28 is reserved for 'definitions', omitted from OpenAPI v2.
+  reserved 28;
+  // field 29 is reserved for 'properties', but in OpenAPI-specific way. TODO(ivucica): add 'additionalProperties'?
+  reserved 29;
+  // following fields are reserved, as the properties have been omitted from OpenAPI v2:
+  // patternProperties, dependencies, propertyNames, const
+  reserved 30 to 33;
+  // Items in 'array' must be unique.
+  repeated string array = 34;
+
+  enum JSONSchemaSimpleTypes {
+    UNKNOWN = 0;
+    ARRAY = 1;
+    BOOLEAN = 2;
+    INTEGER = 3;
+    NULL = 4;
+    NUMBER = 5;
+    OBJECT = 6;
+    STRING = 7;
+  }
+
+  repeated JSONSchemaSimpleTypes type = 35;
+  // following fields are reserved, as the properties have been omitted from OpenAPI v2:
+  // format, contentMediaType, contentEncoding, if, then, else
+  reserved 36 to 41;
+  // field 42 is reserved for 'allOf', but in OpenAPI-specific way. TODO(ivucica): add 'allOf'?
+  reserved 42;
+  // following fields are reserved, as the properties have been omitted from OpenAPI v2:
+  // anyOf, oneOf, not
+  reserved 43 to 45;
+}

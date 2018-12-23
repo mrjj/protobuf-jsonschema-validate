@@ -5,6 +5,12 @@ option go_package = "cases";
 
 import "validate/validate.proto";
 
-message BoolNone       { bool val = 1; }
-message BoolConstTrue  { bool val = 1 [(validate.rules).bool.const = true]; }
-message BoolConstFalse { bool val = 1 [(validate.rules).bool.const = false]; }
+message BoolNone {
+  bool val = 1;
+}
+message BoolConstTrue {
+  bool val = 1 [(validate.rules).bool.const = true];
+}
+message BoolConstFalse {
+  bool val = 1 [(validate.rules).bool.const = false];
+}

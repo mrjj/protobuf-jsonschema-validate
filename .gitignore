@@ -18,3 +18,4 @@ npm-debug.*
 *.mobileprovision
 package-lock.json
 .expo
+schema.json

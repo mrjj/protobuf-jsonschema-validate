@@ -1,91 +1,73 @@
 const TYPE_VALIDATORS = require('./protoScalarValidators');
 const VALUE_VALIDATORS = require('./validationRules');
+const omit = require('lodash.omit');
+const cloneDeep = require('lodash.clonedeep');
+
+const { fullNameToRef } = require('./utils');
 
 const validators = { ...TYPE_VALIDATORS, ...VALUE_VALIDATORS };
-const FIELDS_MAP = {
-  comment: '$comment',
-  default: 'default',
-};
 
-const fullNameToRef = (fullName) => ({
-  $ref: [
-    `${(fullName || '.').split('.').slice(0, -1).join('.')}#`,
-    'definitions',
-    `${fullName.split('.').slice(-1)[0]}`,
-  ].join('/')
-});
+const makeJsonSchemaObject = (obj) => {
+  let result = {
+    ...(obj.comment ? { $comment: obj.comment } : {}),
+    ...(obj.default ? { default: obj.default } : {})
+  };
 
-// const fullNameToDefinition = (fullName) => (fullName || '.').split('.').join('.');
-// const nameToDefinition = (name) => `#/definitions/${name}`;
-
-
-const makeJsonSchemaObject = (obj, mixins) => {
-  let result = {};
-  Object.keys(FIELDS_MAP).forEach(k => {
-    if (obj[k]) {
-      result[FIELDS_MAP[k]] = obj[k];
-    }
-  });
-  result = Object.assign(result, mixins || undefined);
+  if (validators[obj.type]) {
+    result = validators[obj.type](result);
+  }
   Object.keys(obj.options || {}).forEach(option => {
     if (option.startsWith('(validate.rules)')) {
-      const validatorNames = option.replace('(validate.rules).', '').split('.');
-      if (validatorNames.length > 0) {
-        let validatorOptions = obj.options[option];
-        validatorNames.forEach(validatorName => {
-          const validator = validators[validatorName];
-          if (typeof validator !== 'undefined') {
-            if (typeof validator === 'string') {
-              result = { ...result, [validator]: result };
-              // Functions are replacing existing value with their output
-            } else if (typeof validator === 'function') {
-              result = validator(result, validatorOptions);
-            } else if (typeof validator === 'object') {
-              result = { ...result, ...validator };
-            }
-          } else {
-            throw new Error(`Unknown type name: ${validatorName}`);
-          }
-        });
+      const validatorStr = option.replace('(validate.rules).', '');
+      const optValue = obj.options[option];
+      if (validators[validatorStr]) {
+        result = validators[validatorStr](cloneDeep(result), optValue);
+      } else {
+        const [typeValidator, ruleValidator, ...targetParts] = validatorStr.split('.');
+        const target = (targetParts.length > 0) ? targetParts.join('.') : null;
+        result = validators[typeValidator](cloneDeep(result), optValue, target);
+        result = validators[ruleValidator](cloneDeep(result), optValue, target);
       }
     }
   });
+
   return result;
 };
 
 const Field = obj => {
-  const item = makeJsonSchemaObject(
-    obj,
-    {
-      ...(validators[obj.type] ? validators[obj.type] : fullNameToRef(obj.type)),
-      $id: `${obj.id}`,
-    },
-  );
-  return (obj.repeated ? { type: 'array', items: item } : item);
+  const item = makeJsonSchemaObject(obj);
+  console.log(item);
+  return (obj.repeated ? { type: 'array', ...(item ? ({ items: item }) : {}) } : item);
 };
 
-const Type = (obj) => {
+const Type = (obj, prefix) => {
   const properties = {};
   const required = [];
   (obj.fieldsArray || []).forEach(f => {
     const name = f.name.split('.').slice(-1)[0];
     properties[name] = Field(f);
-    if (properties[name].required || (properties[name].optional === false)) {
+    // $id: `${prefix ? `${prefix}.` : ''}${name}`
+    if (
+      (f.optional === false) ||
+      (Object.keys(f.options || {}).filter(k => k.match(/\.required/g)).length > 0)
+    ) {
       required.push(name);
     }
   });
-  return makeJsonSchemaObject(obj, {
+  return {
     type: 'object',
-    $id: `${obj.name}`,
-    ...(required.length > 0 ? { required: required.sort() } : undefined),
-    properties,
+    $id: `${prefix ? `${prefix}.` : ''}${obj.name}`,
+    ...(required.length > 0 ? { required: required.sort() } : {}),
+    ...(Object.keys(properties).length > 0 ? { properties } : {}),
     additionalProperties: false,
-  });
+  };
+  // return makeJsonSchemaObject(obj, schema);
 };
 
-const Enum = obj => makeJsonSchemaObject(
+const Enum = (obj, prefix) => makeJsonSchemaObject(
   obj,
   {
+    $id: `${prefix ? `${prefix}.` : ''}${obj.name}`,
     oneOf: Object.keys(obj.values)
       .sort((a, b) => obj.values[b] - obj.values[a])
       .map(k => Object.assign(

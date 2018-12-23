@@ -1,51 +1,52 @@
 const path = require('path');
+const fs = require('fs');
 
 const ajv = require('ajv');
 const protobufjs = require('protobufjs');
+const { DUMP_DEBUG_SCHEMA, DEBUG_SCHEMA_PATH } = require('./consts');
 
 const constructorConverters = require('./protoTypesConverters');
 
 const escapeUnquotedOptions = (str) =>
   (str || '').replace(/(\[[^=]+= *)([{\[][^;]*[\]}])(] *;)/ig, '$1\'$2\'$3');
 
-
-const recursive = (current, acc) => {
-  const convFn = constructorConverters[current.constructor.name];
-  const processNested = (current, acc) => {
+const recursive = (current, acc, currentNamespace) => {
+  const convertFn = constructorConverters[current.constructor.name];
+  const processNested = (current, acc, fns) => {
     if (current.fieldsArray) {
       current.fieldsArray.forEach(function (field) {
-        recursive(field, acc);
+        recursive(field, acc, fns);
       });
     }
     if (current.oneofsArray) {
       current.oneofsArray.forEach(function (oneof) {
-        recursive(oneof, acc);
+        recursive(oneof, acc, fns);
       });
     }
     if (current.methodsArray) {
       current.methodsArray.forEach(function (method) {
-        recursive(method, acc);
+        recursive(method, acc, fns);
       });
     }
     if (current.nestedArray) {
       current.nestedArray.forEach(function (nested) {
-        recursive(nested, acc);
+        recursive(nested, acc, fns);
       });
     }
     return acc;
   };
-
+  let namespace = currentNamespace;
   if (current.constructor.name === 'Namespace') {
+    namespace = current.fullName.replace(/^\./, '');
+  }
+  if (['Namespace', 'Root', 'Type'].indexOf(current.constructor.name) !== -1) {
+    if (convertFn) {
+      const name = current.fullName.replace(`.${namespace}.`, '');
+      acc[namespace] = acc[namespace] || {};
+      acc[namespace][name] = convertFn(current, namespace);
+    }
     // Dont save to acc
-    processNested(current, acc); //({ $id: current.fullName, definitions: processNested(current, {}) });
-  } else if (current.constructor.name === 'Root') {
-    processNested(current, acc);
-  } else if (convFn) {
-    const ns = current.fullName.split('.').slice(1, -1).join('.');
-    acc[ns] = acc[ns] || {};
-    acc[ns][current.name] = convFn(current);
-  } else {
-    throw new Error(`Cant process type: ${current.constructor.name} name: ${current.name}`);
+    processNested(current, acc, namespace); //({ $id: current.fullName, definitions: processNested(current, {}) });
   }
   return acc;
 };
@@ -58,8 +59,8 @@ const protoToSchema = (protoPaths) => {
   });
 
   const protoSchema = (protobufjs.loadSync(protoPaths, root)).resolveAll();
-  const definitions = recursive(protoSchema, {});
-  return Object.keys(definitions).map(k => ({
+  const definitions = recursive(protoSchema, {}, '');
+  const result = Object.keys(definitions).map(k => ({
     $id: k,
     $schema: 'http://json-schema.org/draft-07/schema#',
     description: `Automatically generated`,
@@ -67,6 +68,7 @@ const protoToSchema = (protoPaths) => {
     type: 'object',
     definitions: definitions[k],
   }));
+  return result;
 };
 
 const safeStringify = (obj) => {
@@ -88,7 +90,12 @@ const safeStringify = (obj) => {
   return result;
 };
 const protoToValidator = (protoPath, schemaId) => {
-  // console.log(safeStringify(protoToSchema(protoPath, schemaId)));
+  if (DUMP_DEBUG_SCHEMA) {
+    if (fs.existsSync(DEBUG_SCHEMA_PATH)) {
+      fs.unlink(DEBUG_SCHEMA_PATH);
+    }
+  }
+  fs.writeFileSync(DEBUG_SCHEMA_PATH, JSON.stringify(protoToSchema(protoPath, schemaId), null, 2));
   return new ajv({
     schemas: [
       // TODO(Ilya): Use to change version
