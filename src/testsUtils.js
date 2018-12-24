@@ -1,6 +1,8 @@
 const path = require('path');
 
-const { TEST_PROTOS_PATHS } = require('./consts');
+const {
+  DEFAULT_SCHEMA_ID_PREFIX, DEFAULT_SCHEMA_ID_SUFFIX, TEST_PROTOS_PATHS,
+} = require('./constants');
 const { protoToValidator } = require('./index');
 /*
   Extensions are no longer available. Use google.protobuf.Any instead.
@@ -28,11 +30,12 @@ const validateData = (protoMessageName, data) => {
   if (!ajv) {
     init();
   }
-  const validate = ajv.getSchema(`tests.harness.cases#/definitions/${protoMessageName}`);
+  const validate = ajv.getSchema(`${DEFAULT_SCHEMA_ID_PREFIX}tests.harness.cases${DEFAULT_SCHEMA_ID_SUFFIX}#/definitions/${protoMessageName}`);
   if (!validate) {
     process.stderr.write(`Cant find validator for message: "${JSON.stringify(protoMessageName)}"`);
     return null;
   }
+  // eslint-disable-next-line
   const val = typeof data === 'undefined' ? {} : (data === null ? { val: null } : { val: data });
   const result = validate(val);
   if (validate.errors) {

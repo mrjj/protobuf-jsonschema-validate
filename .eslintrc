@@ -1,0 +1,18 @@
+{
+  "parser": "babel-eslint",
+  "extends": "airbnb",
+  "plugins": ["jasmine", "jest"],
+  "env": {
+    "browser": true,
+    "jasmine": true,
+    "jest": true
+  },
+  "globals": {
+    "DEBUG": true
+  },
+  "rules": {
+    "indent": ["warn", 2],
+    "import/no-extraneous-dependencies": 0,
+    "jsx-a11y/href-no-hash": 0
+  }
+}

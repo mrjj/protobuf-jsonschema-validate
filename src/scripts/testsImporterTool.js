@@ -1,3 +1,4 @@
+/* eslint-disable */
 const cases = fs.readFileSync(path.join(__dirname, `/protos/protoc-gen-validate-${PROTOC_GEN_VALIDATE_VERSION}/tests/harness/executor/cases.go`))
   .toString();
 

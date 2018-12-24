@@ -1,22 +1,19 @@
 const TYPE_VALIDATORS = require('./protoScalarValidators');
 const VALUE_VALIDATORS = require('./validationRules');
-const omit = require('lodash.omit');
 const cloneDeep = require('lodash.clonedeep');
-
-const { fullNameToRef } = require('./utils');
 
 const validators = { ...TYPE_VALIDATORS, ...VALUE_VALIDATORS };
 
 const makeJsonSchemaObject = (obj) => {
   let result = {
     ...(obj.comment ? { $comment: obj.comment } : {}),
-    ...(obj.default ? { default: obj.default } : {})
+    ...(obj.default ? { default: obj.default } : {}),
   };
 
   if (validators[obj.type]) {
     result = validators[obj.type](result);
   }
-  Object.keys(obj.options || {}).forEach(option => {
+  Object.keys(obj.options || {}).forEach((option) => {
     if (option.startsWith('(validate.rules)')) {
       const validatorStr = option.replace('(validate.rules).', '');
       const optValue = obj.options[option];
@@ -34,16 +31,15 @@ const makeJsonSchemaObject = (obj) => {
   return result;
 };
 
-const Field = obj => {
+const Field = (obj) => {
   const item = makeJsonSchemaObject(obj);
-  console.log(item);
   return (obj.repeated ? { type: 'array', ...(item ? ({ items: item }) : {}) } : item);
 };
 
 const Type = (obj, prefix) => {
   const properties = {};
   const required = [];
-  (obj.fieldsArray || []).forEach(f => {
+  (obj.fieldsArray || []).forEach((f) => {
     const name = f.name.split('.').slice(-1)[0];
     properties[name] = Field(f);
     // $id: `${prefix ? `${prefix}.` : ''}${name}`
@@ -64,10 +60,10 @@ const Type = (obj, prefix) => {
   // return makeJsonSchemaObject(obj, schema);
 };
 
-const Enum = (obj, prefix) => makeJsonSchemaObject(
+const Enum = (obj, ns) => makeJsonSchemaObject(
   obj,
   {
-    $id: `${prefix ? `${prefix}.` : ''}${obj.name}`,
+    $id: `${ns ? `${ns}.` : ''}${obj.name}`,
     oneOf: Object.keys(obj.values)
       .sort((a, b) => obj.values[b] - obj.values[a])
       .map(k => Object.assign(
@@ -89,4 +85,5 @@ const Map = obj => makeJsonSchemaObject(obj, {
   additionalProperties: true,
 });
 
+// FIXME: Add Map support
 module.exports = { Type, Enum, Map, Field };

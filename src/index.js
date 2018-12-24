@@ -1,39 +1,39 @@
-const path = require('path');
 const fs = require('fs');
 
 const ajv = require('ajv');
 const protobufjs = require('protobufjs');
-const { DUMP_DEBUG_SCHEMA, DEBUG_SCHEMA_PATH } = require('./consts');
+
+const { safeStringify } = require('./utils');
+const {
+  DUMP_DEBUG_SCHEMA, DEBUG_SCHEMA_PATH, DEFAULT_SCHEMA_ID_PREFIX, DEFAULT_SCHEMA_ID_SUFFIX,
+} = require('./constants');
 
 const constructorConverters = require('./protoTypesConverters');
 
-const escapeUnquotedOptions = (str) =>
-  (str || '').replace(/(\[[^=]+= *)([{\[][^;]*[\]}])(] *;)/ig, '$1\'$2\'$3');
-
-const recursive = (current, acc, currentNamespace) => {
+const recursive = (current, acc, currentNamespace, schemaIdPrefix, schemaIdSuffix) => {
   const convertFn = constructorConverters[current.constructor.name];
-  const processNested = (current, acc, fns) => {
-    if (current.fieldsArray) {
-      current.fieldsArray.forEach(function (field) {
-        recursive(field, acc, fns);
+  const processNested = (nCurrent, nAcc, fns) => {
+    if (nCurrent.fieldsArray) {
+      nCurrent.fieldsArray.forEach((field) => {
+        recursive(field, nAcc, fns, schemaIdPrefix, schemaIdSuffix);
       });
     }
-    if (current.oneofsArray) {
-      current.oneofsArray.forEach(function (oneof) {
-        recursive(oneof, acc, fns);
+    if (nCurrent.oneofsArray) {
+      nCurrent.oneofsArray.forEach((oneof) => {
+        recursive(oneof, nAcc, fns, schemaIdPrefix, schemaIdSuffix);
       });
     }
-    if (current.methodsArray) {
-      current.methodsArray.forEach(function (method) {
-        recursive(method, acc, fns);
+    if (nCurrent.methodsArray) {
+      nCurrent.methodsArray.forEach((method) => {
+        recursive(method, nAcc, fns, schemaIdPrefix, schemaIdSuffix);
       });
     }
-    if (current.nestedArray) {
-      current.nestedArray.forEach(function (nested) {
-        recursive(nested, acc, fns);
+    if (nCurrent.nestedArray) {
+      nCurrent.nestedArray.forEach((nested) => {
+        recursive(nested, nAcc, fns, schemaIdPrefix, schemaIdSuffix);
       });
     }
-    return acc;
+    return nAcc;
   };
   let namespace = currentNamespace;
   if (current.constructor.name === 'Namespace') {
@@ -43,74 +43,55 @@ const recursive = (current, acc, currentNamespace) => {
     if (convertFn) {
       const name = current.fullName.replace(`.${namespace}.`, '');
       acc[namespace] = acc[namespace] || {};
-      acc[namespace][name] = convertFn(current, namespace);
+      acc[namespace][name] = convertFn(current, namespace, schemaIdPrefix, schemaIdSuffix);
     }
     // Dont save to acc
-    processNested(current, acc, namespace); //({ $id: current.fullName, definitions: processNested(current, {}) });
+    processNested(current, acc, namespace, schemaIdPrefix, schemaIdSuffix);
   }
   return acc;
 };
 
-const protoToSchema = (protoPaths) => {
-  const root = new protobufjs.Root();
-  root.loadSync(path.join(__dirname, '..', 'node_modules/google-proto-files/google/protobuf/duration.proto'), {
-    alternateCommentMode: true,
-    keepCase: true
-  });
 
+/*
+  "$id": "https://example.com/xxx.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+ */
+const protoToSchema = (
+  protoPaths,
+  schemaIdPrefix = DEFAULT_SCHEMA_ID_PREFIX,
+  schemaIdSuffix = DEFAULT_SCHEMA_ID_SUFFIX,
+) => {
+  const root = new protobufjs.Root();
   const protoSchema = (protobufjs.loadSync(protoPaths, root)).resolveAll();
-  const definitions = recursive(protoSchema, {}, '');
-  const result = Object.keys(definitions).map(k => ({
-    $id: k,
+  const definitions = recursive(protoSchema, {}, '', schemaIdPrefix, schemaIdSuffix);
+  return Object.keys(definitions).map(k => ({
+    $id: `${schemaIdPrefix}${k}${schemaIdSuffix}`,
     $schema: 'http://json-schema.org/draft-07/schema#',
-    description: `Automatically generated`,
+    description: 'Automatically generated',
     // description: `Automatically generated from:\n${protoPaths.join('\n')}`,
     type: 'object',
     definitions: definitions[k],
   }));
-  return result;
 };
 
-const safeStringify = (obj) => {
-  let product = [];
-  const result = JSON.stringify(obj, function (key, value) {
-    if (typeof value === 'object' && value !== null) {
-      if (product.indexOf(value) !== -1) {
-        try {
-          return JSON.parse(JSON.stringify(value));
-        } catch (error) {
-          return {};
-        }
-      }
-      product.push(value);
-    }
-    return value;
-  });
-  product = null;
-  return result;
-};
-const protoToValidator = (protoPath, schemaId) => {
+
+const protoToValidator = (protoPath) => {
   if (DUMP_DEBUG_SCHEMA) {
     if (fs.existsSync(DEBUG_SCHEMA_PATH)) {
       fs.unlink(DEBUG_SCHEMA_PATH);
     }
   }
-  fs.writeFileSync(DEBUG_SCHEMA_PATH, JSON.stringify(protoToSchema(protoPath, schemaId), null, 2));
+  fs.writeFileSync(DEBUG_SCHEMA_PATH, JSON.stringify(
+    protoToSchema(protoPath),
+    null, 2));
+  // eslint-disable-next-line
   return new ajv({
     schemas: [
       // TODO(Ilya): Use to change version
       // require('ajv/lib/refs/json-schema-draft-07.json'),
-      ...protoToSchema(protoPath, schemaId).map(s => {
-        return JSON.parse(safeStringify(s));
-      }),
+      ...protoToSchema(protoPath).map(s => JSON.parse(safeStringify(s))),
     ],
   });
 };
 
-const toStdout = (ajvSchema, pretty = true) => (
-  pretty
-    ? JSON.stringify(ajv.serialize(ajvSchema), null, 2)
-    : JSON.stringify(ajv.serialize(ajvSchema))
-);
-
-module.exports = { protoToSchema, toStdout, protoToValidator, escapeUnquotedOptions };
+module.exports = { protoToValidator };

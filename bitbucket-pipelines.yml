@@ -7,5 +7,5 @@ pipelines:
           - node
         script:
           - npm install
-          - npm test
           - npm lint
+          - npm test

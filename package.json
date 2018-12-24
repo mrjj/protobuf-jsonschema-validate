@@ -6,7 +6,7 @@
     "email": "post.ilya@gmail.com"
   },
   "description": "Protocol buffers validation (protoc-gen-validate v0.0.11) to JSON Schema",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "homepage": "https://github.org/mrjj/protobuf-jsonschema-validate",
   "main": "./src/",
   "files": [
@@ -17,24 +17,41 @@
   "scripts": {
     "test:prepare_data": "node ./src/scripts/prepare_test_data.js",
     "test": "jest",
-    "lint": "eslint src"
+    "lint": "eslint src/*.js && eslint bin/pjv",
+    "pjv": "bin/pjv",
+    "help": "bin/pjv help"
   },
   "dependencies": {
     "ajv": "6.6.2",
     "google-proto-files": "0.18.0",
-    "protobufjs": "6.8.8",
+    "lodash.clonedeep": "4.5.0",
+    "lodash.get": "4.4.2",
     "lodash.omit": "4.5.0",
     "lodash.pick": "4.4.0",
     "lodash.set": "4.3.2",
-    "lodash.clonedeep": "4.5.0",
-    "lodash.get": "4.4.2"
+    "pino": "5.10.5",
+    "pino-pretty": "2.5.0",
+    "protobufjs": "6.8.8",
+    "yargs": "12.0.5"
   },
   "jest": {
     "transform": {}
   },
   "devDependencies": {
-    "@babel/core": "7.2.0",
-    "download-tarball": "^2.0.0",
+    "babel-eslint": "^8.2.3",
+    "babel-plugin-import": "^1.2.0",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb": "15.1.0",
+    "eslint-plugin-babel": "5.2.1",
+    "eslint-plugin-eslint-comments": "^2.0.1",
+    "eslint-plugin-import": "2.14.0",
+    "eslint-plugin-jasmine": "2.10.1",
+    "eslint-plugin-jest": "^21.5.0",
+    "eslint-plugin-jsx-a11y": "6.1.2",
+    "eslint-plugin-react": "7.11.1",
     "jest": "23.6.0"
+  },
+  "bin": {
+    "pjv": "bin/pjv"
   }
 }

@@ -1,6 +1,6 @@
 const path = require('path');
-const { protoToSchema } = require('../index');
-const { TEST_PROTOS_SUBDIR } = require('../consts');
+const { protoToSchema } = require('../utils');
+const { TEST_PROTOS_SUBDIR } = require('../constants');
 
 /**
  * __tests__ refs are taken from

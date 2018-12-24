@@ -1,0 +1,118 @@
+#!/usr/bin/env node
+
+/**
+ * @fileOverview: main CLI file
+ */
+const path = require('path');
+const fs = require('fs');
+const Yargs = require('yargs');
+
+const { mkdirP, rmrf } = require('../src/utils');
+const { protoToSchema } = require('../src/index');
+const logger = require('../src/logger')({ name: 'pjv-cli' });
+
+const {
+  DEFAULT_OUTPUT_PATH, WKT_PATH, WKT_TYPE_PATH, DEFAULT_SCHEMA_ID_PREFIX, DEFAULT_SCHEMA_ID_SUFFIX,
+} = require('../src/constants');
+
+// TODO: Support older (other than 7.0 up to now) JSON schema versions
+
+// argv call have hidden side-effect
+// noinspection JSUnusedLocalSymbols
+// eslint-disable-next-line no-unused-vars
+const argv = Yargs
+  .usage('$0 --quiet <cmd> [input-path] [output-path]')
+  .boolean('quiet')
+  .alias('q', 'quiet')
+  .boolean('gen')
+  .alias('g', 'generate')
+  .command(
+    'gen [input-path] [output-path] [no-wkt]',
+    'generate json schemas',
+    (yargs) => {
+      yargs
+        .positional('input-path', {
+          type: 'string',
+          describe: '.proto files input path',
+        })
+        .positional('output-path', {
+          type: 'string',
+          default: DEFAULT_OUTPUT_PATH,
+          describe: 'JSON schema output path',
+        })
+        .boolean('no-wkt', {
+          type: 'boolean',
+          default: false,
+          describe: 'exclude Google Well Known Types (WKT) from namespace',
+        })
+        .boolean('pretty-print', {
+          type: 'boolean',
+          default: true,
+          describe: 'Pretty print JSON schema output',
+        })
+        .boolean('schema-prefix', {
+          type: 'string',
+          default: DEFAULT_SCHEMA_ID_PREFIX,
+          describe: 'Add JSON schema prefix',
+        })
+        .boolean('schema-suffix', {
+          type: 'string',
+          default: DEFAULT_SCHEMA_ID_SUFFIX,
+          describe: 'Add JSON schema suffix',
+        })
+        .alias('i', 'input-path')
+        .alias('o', 'output-path')
+        .alias('W', 'no-wkt')
+        .alias('p', 'pretty-print');
+        .alias('s', 'schema-prefix');
+        .alias('S', 'schema-prefix');
+    },
+    async (argvCmd) => {
+      const { i, o, p, s, S, quiet, W } = argvCmd;
+      if (quiet === true) {
+        logger.level = 'info';
+      } else {
+        logger.level = 'debug';
+      }
+
+      logger.info('Making JSON schema V7 from .proto file:');
+      logger.info(i);
+
+      const wktPaths = fs.readdirSync(WKT_PATH)
+        .filter(name => path.extname(name) === '.proto')
+        .map(fp => path.join(WKT_PATH, fp));
+
+      logger.info(W
+        ? 'Google well-known .proto types (Timestamp, Date and other useful things) will be automatically added, to disable this behaviour please use `---no-wkt` or `-W` option'
+        : 'Google Well Known Types are not added to output due to  `---no-wkt` or `-W` flag being set',
+      );
+      const wktTypePaths = fs.readdirSync(WKT_TYPE_PATH)
+        .filter(name => path.extname(name) === '.proto')
+        .map(fp => path.join(WKT_TYPE_PATH, fp));
+
+      const protoPaths = [
+        ...(W ? [] : [...wktPaths, ...wktTypePaths]),
+        i,
+      ].map(fp => path.resolve(fp));
+
+      logger.info(`Input proto paths: ${protoPaths.map(fp => `  ${fp}`).join('\n')}`);
+
+      const oPath = path.resolve(o);
+      rmrf(oPath);
+      mkdirP(oPath);
+
+      /* Run */
+      const schemas = protoToSchema(protoPaths, s, S);
+
+      const generatedFilesPaths = [];
+      schemas.forEach(
+        (schema) => {
+          const oFilePath = path.join(oPath, schema.$id.split('/').slice(3).join('.'));
+          generatedFilesPaths.push(oFilePath);
+          fs.writeFileSync(oFilePath, p ? JSON.stringify(schema, null, 2) : JSON.stringify(schema));
+        },
+      );
+
+      logger.info(`Done! Result saved to:\n${generatedFilesPaths.map(fp => `  ${fp}`).join('\n')}`);
+    },
+  ).argv;

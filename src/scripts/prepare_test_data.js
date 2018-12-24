@@ -1,4 +1,5 @@
-const { PROTOC_GEN_VALIDATE_URI, PROTOC_GEN_VALIDATE_VERSION, TEST_DATA_DIR } = require('../consts');
+/* eslint-disable */
+const { PROTOC_GEN_VALIDATE_URI, PROTOC_GEN_VALIDATE_VERSION, TEST_DATA_DIR } = require('../constants');
 const { escapeUnquotedOptions } = require('../index');
 
 const fs = require('fs');
