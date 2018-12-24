@@ -15,7 +15,7 @@
     "src/scripts"
   ],
   "scripts": {
-    "test:prepare": "node ./src/scripts/prepare_test_data.js",
+    "test:prepare_data": "node ./src/scripts/prepare_test_data.js",
     "test": "jest",
     "lint": "eslint src"
   },

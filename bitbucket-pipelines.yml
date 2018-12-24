@@ -1,0 +1,11 @@
+image: node:10.13.0-alpine
+
+pipelines:
+  default:
+    - step:
+        caches:
+          - node
+        script:
+          - npm install
+          - npm test
+          - npm lint
