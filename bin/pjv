@@ -63,8 +63,8 @@ const argv = Yargs
         .alias('i', 'input-path')
         .alias('o', 'output-path')
         .alias('W', 'no-wkt')
-        .alias('p', 'pretty-print');
-        .alias('s', 'schema-prefix');
+        .alias('p', 'pretty-print')
+        .alias('s', 'schema-prefix')
         .alias('S', 'schema-prefix');
     },
     async (argvCmd) => {
